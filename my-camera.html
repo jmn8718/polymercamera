@@ -8,12 +8,22 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 
-<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/polymer.html" xmlns="http://www.w3.org/1999/html">
 
 <dom-module id="my-camera">
   <style>
     .my-camera{
       text-align: center;
+    }
+    .form-content{
+      width: 49%;
+      vertical-align: top;
+      border: 1px solid red;
+      display: inline-block;
+    }
+    form input{
+      display: block;
+      margin: 10px auto;
     }
     #image, #video{
       width: 640px;
@@ -29,7 +39,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       padding: 5px;
     }
     .button-camera{
-      width: 100%;
+      width: 50%;
       margin-top: -70px;
       position: absolute;
     }
@@ -39,26 +49,46 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       border-radius: 50%;
       height: 60px;
     }
+    .base64{
+      width: 100%;
+      margin: 0 auto;
+    }
   </style>
   <template>
-    <div class="section-display">
-      <img src="" id="image">
-      <video autoplay id="video" width="{{width}}" height="{{height}}"></video>
-      <canvas style="display:none;" id="canvas" width="{{width}}" height="{{height}}"></canvas>
-      <div class="button-camera" >
-        <img src="hero.svg" on-tap="snapshot">
+    <div class="container">
+      <div class="form-content">
+        <form>
+          <input type="text" value="{{formData.company}}" placeholder="company">
+          <input type="text" value="{{formData.country}}" placeholder="country">
+          <input type="text" value="{{formData.website}}" placeholder="website">
+          <input type="text" value="{{formData.requiredApis}}" placeholder="required apis">
+          <input type="text" value="{{formData.apiBussinesObjective}}" placeholder="api bussines objective">
+        </form>
+        <button  on-tap="sendAll">SEND</button>
+      </div>
+      <div class="form-content">
+        <div class="section-display">
+          <img src="" id="image">
+          <video autoplay id="video" ></video>
+          <canvas style="display:none;" id="canvas" width="{{width}}" height="{{height}}"></canvas>
+          <!--<div class="button-camera" >-->
+          <!--<img src="hero.svg" on-tap="snapshot">-->
+          <!--</div>-->
+        </div>
+        <div class="section-button">
+          <button on-tap="snapshot" id="button-save">Save Image</button>
+          <button on-tap="back" id="button-back" style="display:none;">Back</button>
+          <button on-tap="continue" id="button-continue" style="display:none;">Continue</button>
+        </div>
+        <div class="section-thumbnails">
+          <img src="" id="image-front">
+          <img src="" id="image-back">
+          <img src="" id="image-picture">
+        </div>
       </div>
     </div>
-    <div class="section-button">
-      <button on-tap="snapshot" id="button-save">Save Image</button>
-      <button on-tap="back" id="button-back" style="display:none;">Back</button>
-      <button on-tap="continue" id="button-continue" style="display:none;">Continue</button>
-    </div>
-    <div class="section-thumbnails">
-        <img src="" id="image-front">
-        <img src="" id="image-back">
-        <img src="" id="image-picture">
-    </div>
+
+
   </template>
 
   <script>
@@ -82,13 +112,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         canvas: Object,
         ctx:Object,
         count: Number,
-        data: Object
+        formData: {
+            company: 'default_company',
+            website:'default_website',
+            country:'default_country',
+            requiredApis:'default_api',
+            apiBussinesObjective:'default_obj'
+        },
+        netVerifyData: {
+            front: 'default_front',
+            back:'default_back',
+            picture:'default_pic'
+        }
       },
 
       // Element Lifecycle
 
       ready: function() {
-        console.log(this.width)
         // `ready` is called after all elements have been configured, but
         // propagates bottom-up. This element's children are ready, but parents
         // are not.
@@ -104,12 +144,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.imageBack = document.getElementById('image-back');
         this.imagePicture = document.getElementById('image-picture');
         this.ctx = this.canvas.getContext('2d');
-        this.data = {
-          front:'',
-          back:'',
-          picture:''
+
+        this.netVerifyData= {
+          front: 'default_front',
+          back:'default_back',
+          picture:'default_pic'
         }
 
+        this.formData={
+          company: 'default_company',
+                  website:'default_website',
+                  country:'default_country',
+                  requiredApis:'default_api',
+                  apiBussinesObjective:'default_obj'
+        }
         if(navigator.getUserMedia) { // Standard
           navigator.getUserMedia({ "video": true }, function(stream) {
             this.video.src = stream;
@@ -136,7 +184,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         // This is a good place to perform any work related to your element's
         // visual state or active behavior (measuring sizes, beginning animations,
         // loading resources, etc).
-        //Attach Click event with camOnButton
 
       },
 
@@ -169,7 +216,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         $("#button-continue").hide();
         $("#button-back").hide();
       },
-
+      sendAll: function(){
+        console.log(this.formData)
+        console.log(this.netVerifyData)
+        var body =  {
+          formData: this.formData,
+          netVerifyData: this.netVerifyData
+        }
+        console.log(body)
+      },
       continue: function() {	// Video Error Handler
         $("#video").show();
         $("#image").hide();
@@ -181,15 +236,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         var str = this.canvas.toDataURL("image/png").substr(index+1);
 //        console.log(this.count)
         if(this.count == 0){
-          this.data.front =str;
+          this.netVerifyData.front = str;
           this.imageFront.src = this.image.src;
+          this.notifyPath('netVerifyData.front', this.netVerifyData.front);
         } else if(this.count == 1){
-          this.data.back =str;
+          this.netVerifyData.back = str;
           this.imageBack.src = this.image.src;
+          this.notifyPath('netVerifyData.back', this.netVerifyData.back);
         } else if(this.count == 2){
-          this.data.picture =str;
+          this.netVerifyData.picture = str;
           this.imagePicture.src = this.image.src;
+          this.notifyPath('netVerifyData.picture', this.netVerifyData.picture);
         }
+        console.log(this.data)
         this.count = (this.count + 1) % 3
       }
     });
