@@ -1,0 +1,197 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../polymer/polymer.html">
+
+<dom-module id="my-camera">
+  <style>
+    .my-camera{
+      text-align: center;
+    }
+    #image, #video{
+      width: 640px;
+      height: 480px;
+      margin: 0 auto;
+    }
+    .section-button, .section-display, .section-thumbnails{
+      width: 100%;
+      margin: 0 auto;
+    }
+    .section-thumbnails img{
+      width: calc(600px /3);
+      padding: 5px;
+    }
+    .button-camera{
+      width: 100%;
+      margin-top: -70px;
+      position: absolute;
+    }
+    .button-camera img{
+      width: 60px;
+      background: blue;
+      border-radius: 50%;
+      height: 60px;
+    }
+  </style>
+  <template>
+    <div class="section-display">
+      <img src="" id="image">
+      <video autoplay id="video" width="{{width}}" height="{{height}}"></video>
+      <canvas style="display:none;" id="canvas" width="{{width}}" height="{{height}}"></canvas>
+      <div class="button-camera" >
+        <img src="hero.svg" on-tap="snapshot">
+      </div>
+    </div>
+    <div class="section-button">
+      <button on-tap="snapshot" id="button-save">Save Image</button>
+      <button on-tap="back" id="button-back" style="display:none;">Back</button>
+      <button on-tap="continue" id="button-continue" style="display:none;">Continue</button>
+    </div>
+    <div class="section-thumbnails">
+        <img src="" id="image-front">
+        <img src="" id="image-back">
+        <img src="" id="image-picture">
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'my-camera',
+
+      properties: {
+        width: {
+          type: Number,
+          value: 640,
+        },
+        height: {
+          type: Number,
+          value: 480,
+        },
+        image: Object,
+        imageFront: Object,
+        imageBack: Object,
+        imagePicture: Object,
+        video: Object,
+        canvas: Object,
+        ctx:Object,
+        count: Number,
+        data: Object
+      },
+
+      // Element Lifecycle
+
+      ready: function() {
+        console.log(this.width)
+        // `ready` is called after all elements have been configured, but
+        // propagates bottom-up. This element's children are ready, but parents
+        // are not.
+        //
+        // This is the point where you should make modifications to the DOM (when
+        // necessary), or kick off any processes the element wants to perform.
+        $("#image").hide();
+        this.count = 0;
+        this.video = document.getElementById("video");
+        this.canvas = document.getElementById('canvas');
+        this.image = document.getElementById('image');
+        this.imageFront = document.getElementById('image-front');
+        this.imageBack = document.getElementById('image-back');
+        this.imagePicture = document.getElementById('image-picture');
+        this.ctx = this.canvas.getContext('2d');
+        this.data = {
+          front:'',
+          back:'',
+          picture:''
+        }
+
+        if(navigator.getUserMedia) { // Standard
+          navigator.getUserMedia({ "video": true }, function(stream) {
+            this.video.src = stream;
+            this.video.play();
+          }, this.errCallBack);
+        } else if(navigator.webkitGetUserMedia) { // WebKit-prefixed
+          navigator.webkitGetUserMedia({ "video": true }, function(stream){
+            this.video.src = window.URL.createObjectURL(stream);
+            this.video.play();
+          }, this.errCallBack);
+        }
+        else if(navigator.mozGetUserMedia) { // Firefox-prefixed
+          navigator.mozGetUserMedia({ "video": true }, function(stream){
+            this.video.src = window.URL.createObjectURL(stream);
+            this.video.play();
+          }, this.errCallBack);
+        }
+      },
+
+      attached: function() {
+        // `attached` fires once the element and its parents have been inserted
+        // into a document.
+        //
+        // This is a good place to perform any work related to your element's
+        // visual state or active behavior (measuring sizes, beginning animations,
+        // loading resources, etc).
+        //Attach Click event with camOnButton
+
+      },
+
+      detached: function() {
+        // The analog to `attached`, `detached` fires when the element has been
+        // removed from a document.
+        //
+        // Use this to clean up anything you did in `attached`.
+      },
+
+      snapshot: function() {
+        $("#video").hide();
+        $("#image").show();
+        $("#button-save").hide();
+        $("#button-continue").show();
+        $("#button-back").show();
+        this.ctx.drawImage(this.video, 0,0);
+        this.image.src = this.canvas.toDataURL('image/png');
+
+      },
+
+      errCallBack: function(error) {	// Video Error Handler
+        console.log("Video  error: ", error.code);
+      },
+
+      back: function() {	// Video Error Handler
+        $("#video").show();
+        $("#button-save").show();
+        $("#image").hide();
+        $("#button-continue").hide();
+        $("#button-back").hide();
+      },
+
+      continue: function() {	// Video Error Handler
+        $("#video").show();
+        $("#image").hide();
+        $("#button-save").show();
+        $("#button-continue").hide();
+        $("#button-back").hide();
+
+        var index = this.canvas.toDataURL("image/png").indexOf(',');
+        var str = this.canvas.toDataURL("image/png").substr(index+1);
+//        console.log(this.count)
+        if(this.count == 0){
+          this.data.front =str;
+          this.imageFront.src = this.image.src;
+        } else if(this.count == 1){
+          this.data.back =str;
+          this.imageBack.src = this.image.src;
+        } else if(this.count == 2){
+          this.data.picture =str;
+          this.imagePicture.src = this.image.src;
+        }
+        this.count = (this.count + 1) % 3
+      }
+    });
+  </script>
+</dom-module>
