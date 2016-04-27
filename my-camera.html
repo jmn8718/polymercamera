@@ -8,7 +8,9 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 
-<link rel="import" href="../polymer/polymer.html" xmlns="http://www.w3.org/1999/html">
+<link rel="import" href="bower_components/iron-ajax/iron-ajax.html" xmlns="http://www.w3.org/1999/html">
+<link rel="import" href="app/elements/camera-verification/camera-verification.html" xmlns="http://www.w3.org/1999/html">
+<link rel="import" href="app/elements/form-go-live/form-go-live.html" xmlns="http://www.w3.org/1999/html">
 
 <dom-module id="my-camera">
   <style>
@@ -21,71 +23,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       border: 1px solid red;
       display: inline-block;
     }
-    form input{
-      display: block;
-      margin: 10px auto;
-    }
-    #image, #video{
-      width: 640px;
-      height: 480px;
-      margin: 0 auto;
-    }
-    .section-button, .section-display, .section-thumbnails{
-      width: 100%;
-      margin: 0 auto;
-    }
-    .section-thumbnails img{
-      width: calc(600px /3);
-      padding: 5px;
-    }
-    .button-camera{
-      width: 50%;
-      margin-top: -70px;
-      position: absolute;
-    }
-    .button-camera img{
-      width: 60px;
-      background: blue;
-      border-radius: 50%;
-      height: 60px;
-    }
     .base64{
       width: 100%;
       margin: 0 auto;
     }
   </style>
   <template>
+    <iron-ajax
+        id="ajax"
+        method="POST"
+        body="{{body}}"
+        content-type="application/json"
+        url="/api/performNetVerify"
+        handle-as="json"
+        last-response="{{_response}}"
+        on-response="_handleResponse"></iron-ajax>
     <div class="container">
+      <h1>FORM GO LIVE</h1>
       <div class="form-content">
-        <form>
-          <input type="text" value="{{formData.company}}" placeholder="company">
-          <input type="text" value="{{formData.country}}" placeholder="country">
-          <input type="text" value="{{formData.website}}" placeholder="website">
-          <input type="text" value="{{formData.requiredApis}}" placeholder="required apis">
-          <input type="text" value="{{formData.apiBussinesObjective}}" placeholder="api bussines objective">
-        </form>
-        <button  on-tap="sendAll">SEND</button>
+        <form-go-live form-data="{{formData}}"></form-go-live>
       </div>
       <div class="form-content">
-        <div class="section-display">
-          <img src="" id="image">
-          <video autoplay id="video" ></video>
-          <canvas style="display:none;" id="canvas" width="{{width}}" height="{{height}}"></canvas>
-          <!--<div class="button-camera" >-->
-          <!--<img src="hero.svg" on-tap="snapshot">-->
-          <!--</div>-->
-        </div>
-        <div class="section-button">
-          <button on-tap="snapshot" id="button-save">Save Image</button>
-          <button on-tap="back" id="button-back" style="display:none;">Back</button>
-          <button on-tap="continue" id="button-continue" style="display:none;">Continue</button>
-        </div>
-        <div class="section-thumbnails">
-          <img src="" id="image-front">
-          <img src="" id="image-back">
-          <img src="" id="image-picture">
-        </div>
+        <camera-verification net-verify-data="{{netVerifyData}}"></camera-verification>
       </div>
+      <hr>
+      <button  on-tap="sendAll">SEND</button>
     </div>
 
 
@@ -96,34 +58,44 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       is: 'my-camera',
 
       properties: {
-        width: {
-          type: Number,
-          value: 640,
+        headers: {
+          type: Object,
+          value: function(){
+            return {
+              'Access-Control-Allow-Origin':'example.com',
+              'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE',
+              'Access-Control-Allow-Headers': 'Content-Type'
+            }
+          }
         },
-        height: {
-          type: Number,
-          value: 480,
+        url:String,
+        _response: {
+          type:Object
         },
-        image: Object,
-        imageFront: Object,
-        imageBack: Object,
-        imagePicture: Object,
-        video: Object,
-        canvas: Object,
-        ctx:Object,
-        count: Number,
-        formData: {
-            company: 'default_company',
-            website:'default_website',
-            country:'default_country',
-            requiredApis:'default_api',
-            apiBussinesObjective:'default_obj'
+        formData:{
+          type: Object,
+          value: function(){
+            return {
+              company: '',
+              website:'',
+              country:'',
+              requiredApis:'',
+              apiBussinesObjective:''
+            }
+          }
         },
         netVerifyData: {
-            front: 'default_front',
-            back:'default_back',
-            picture:'default_pic'
-        }
+          type: Object,
+          value: function() {
+            return {
+              'frontsideImage':'',
+              'backsideImage':'',
+              'faceImage':'',
+              'customerId':'chewbacca'
+            };
+          }
+        },
+        body: Object
       },
 
       // Element Lifecycle
@@ -135,46 +107,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         //
         // This is the point where you should make modifications to the DOM (when
         // necessary), or kick off any processes the element wants to perform.
-        $("#image").hide();
-        this.count = 0;
-        this.video = document.getElementById("video");
-        this.canvas = document.getElementById('canvas');
-        this.image = document.getElementById('image');
-        this.imageFront = document.getElementById('image-front');
-        this.imageBack = document.getElementById('image-back');
-        this.imagePicture = document.getElementById('image-picture');
-        this.ctx = this.canvas.getContext('2d');
-
-        this.netVerifyData= {
-          front: 'default_front',
-          back:'default_back',
-          picture:'default_pic'
-        }
-
-        this.formData={
-          company: 'default_company',
-                  website:'default_website',
-                  country:'default_country',
-                  requiredApis:'default_api',
-                  apiBussinesObjective:'default_obj'
-        }
-        if(navigator.getUserMedia) { // Standard
-          navigator.getUserMedia({ "video": true }, function(stream) {
-            this.video.src = stream;
-            this.video.play();
-          }, this.errCallBack);
-        } else if(navigator.webkitGetUserMedia) { // WebKit-prefixed
-          navigator.webkitGetUserMedia({ "video": true }, function(stream){
-            this.video.src = window.URL.createObjectURL(stream);
-            this.video.play();
-          }, this.errCallBack);
-        }
-        else if(navigator.mozGetUserMedia) { // Firefox-prefixed
-          navigator.mozGetUserMedia({ "video": true }, function(stream){
-            this.video.src = window.URL.createObjectURL(stream);
-            this.video.play();
-          }, this.errCallBack);
-        }
+        this.body = {}
       },
 
       attached: function() {
@@ -193,64 +126,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         //
         // Use this to clean up anything you did in `attached`.
       },
-
-      snapshot: function() {
-        $("#video").hide();
-        $("#image").show();
-        $("#button-save").hide();
-        $("#button-continue").show();
-        $("#button-back").show();
-        this.ctx.drawImage(this.video, 0,0);
-        this.image.src = this.canvas.toDataURL('image/png');
-
-      },
-
-      errCallBack: function(error) {	// Video Error Handler
-        console.log("Video  error: ", error.code);
-      },
-
-      back: function() {	// Video Error Handler
-        $("#video").show();
-        $("#button-save").show();
-        $("#image").hide();
-        $("#button-continue").hide();
-        $("#button-back").hide();
+      observers: [
+        '_handleResponse(_response.*)'
+      ],
+      _handleResponse: function(newVal){
+        console.log(newVal)
       },
       sendAll: function(){
-        console.log(this.formData)
-        console.log(this.netVerifyData)
-        var body =  {
+        this.body =  {
           formData: this.formData,
           netVerifyData: this.netVerifyData
         }
-        console.log(body)
+        console.log(this.body)
+        this.$.ajax.generateRequest();
       },
-      continue: function() {	// Video Error Handler
-        $("#video").show();
-        $("#image").hide();
-        $("#button-save").show();
-        $("#button-continue").hide();
-        $("#button-back").hide();
-
-        var index = this.canvas.toDataURL("image/png").indexOf(',');
-        var str = this.canvas.toDataURL("image/png").substr(index+1);
-//        console.log(this.count)
-        if(this.count == 0){
-          this.netVerifyData.front = str;
-          this.imageFront.src = this.image.src;
-          this.notifyPath('netVerifyData.front', this.netVerifyData.front);
-        } else if(this.count == 1){
-          this.netVerifyData.back = str;
-          this.imageBack.src = this.image.src;
-          this.notifyPath('netVerifyData.back', this.netVerifyData.back);
-        } else if(this.count == 2){
-          this.netVerifyData.picture = str;
-          this.imagePicture.src = this.image.src;
-          this.notifyPath('netVerifyData.picture', this.netVerifyData.picture);
-        }
-        console.log(this.data)
-        this.count = (this.count + 1) % 3
-      }
     });
   </script>
 </dom-module>

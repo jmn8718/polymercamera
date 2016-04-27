@@ -1,0 +1,190 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../../../bower_components/polymer/polymer.html">
+
+<dom-module id="camera-verification">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+      .camera-container{
+        margin: 5px;
+      }
+      #image, #video{
+        width: 100%;
+      }
+      .section-button, .section-display, .section-thumbnails{
+        width: 100%;
+        margin: 0 auto;
+      }
+      .section-thumbnails{
+        margin-top: 5px;
+      }
+      .section-thumbnails img{
+        max-width: calc(85%/3);
+        width: 160px;
+        height: 120px;
+        border: 1px solid deepskyblue;
+        border-radius: 10px;
+        padding: 5px;
+      }
+      .button-camera{
+        width: 50%;
+        margin-top: -70px;
+        position: absolute;
+      }
+      .button-camera img{
+        width: 60px;
+        background: blue;
+        border-radius: 50%;
+        height: 60px;
+      }
+    </style>
+    <div class="camera-container">
+      <div class="section-display">
+        <img src="" id="image" hidden="{{!previewPhoto}}">
+        <video autoplay id="video" hidden="{{previewPhoto}}"></video>
+        <canvas style="display:none;" id="canvas" width="{{width}}" height="{{height}}"></canvas>
+        <!--<div class="button-camera" >-->
+        <!--<img src="hero.svg" on-tap="snapshot">-->
+        <!--</div>-->
+      </div>
+      <div class="section-button">
+        <button on-tap="snapshot" id="button-save" hidden="{{previewPhoto}}">Save Image</button>
+        <button on-tap="back" id="button-back" hidden="{{!previewPhoto}}">Back</button>
+        <button on-tap="continue" id="button-continue" hidden="{{!previewPhoto}}">Continue</button>
+      </div>
+      <div class="section-thumbnails">
+        <img src="" class="image-preview" id="image-front">
+        <img src="" class="image-preview" id="image-back" >
+        <img src="" class="image-preview" id="image-picture">
+      </div>
+    </div>
+
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    Polymer({
+      is: 'camera-verification',
+
+      properties: {
+        width: {
+          type: Number,
+          value: 640,
+        },
+        height: {
+          type: Number,
+          value: 480,
+        },
+        image: Object,
+        imageFront: Object,
+        imageBack: Object,
+        imagePicture: Object,
+        video: Object,
+        canvas: Object,
+        ctx:Object,
+        count: Number,
+        netVerifyData: {
+          type: Object,
+          notify:true
+        },
+        previewPhoto: Boolean,
+
+      },
+
+      ready: function() {
+
+      },
+
+      attached: function() {
+        this.previewPhoto = false;
+
+        this.count = 0;
+        this.video = document.getElementById("video");
+        this.canvas = document.getElementById('canvas');
+        this.image = document.getElementById('image');
+        this.imageFront = document.getElementById('image-front');
+        this.imageBack = document.getElementById('image-back');
+        this.imagePicture = document.getElementById('image-picture');
+        this.ctx = this.canvas.getContext('2d');
+
+        var that = this;
+        if(navigator.getUserMedia) { // Standard
+          navigator.getUserMedia({ "video": true }, function(stream) {
+            that.video.src = stream;
+            that.video.play();
+          }, that.errCallBack);
+        } else if(navigator.webkitGetUserMedia) { // WebKit-prefixed
+          navigator.webkitGetUserMedia({ "video": true }, function(stream){
+            that.video.src = window.URL.createObjectURL(stream);
+            that.video.play();
+          }, that.errCallBack);
+        }
+        else if(navigator.mozGetUserMedia) { // Firefox-prefixed
+          navigator.mozGetUserMedia({ "video": true }, function(stream){
+            that.video.src = window.URL.createObjectURL(stream);
+            that.video.play();
+          }, that.errCallBack);
+        }
+      },
+
+      detached: function() {
+      },
+
+      snapshot: function() {
+
+        this.ctx.drawImage(this.video, 0,0);
+        this.image.src = this.canvas.toDataURL('image/png');
+
+        this.previewPhoto = true;
+
+      },
+
+      errCallBack: function(error) {	// Video Error Handler
+        console.log("Video  error: ", error.code);
+      },
+
+      back: function() {
+
+        this.previewPhoto = false;
+      },
+
+      continue: function() {
+        this.$.canvas.width = this.width;
+        this.$.canvas.height = this.height;
+        var index = this.canvas.toDataURL("image/png").indexOf(',');
+        var str = this.canvas.toDataURL("image/png").substr(index+1);
+        if(this.count == 0){
+          this.netVerifyData.frontsideImage = str;
+          this.imageFront.src = this.image.src;
+          this.notifyPath('netVerifyData.frontsideImage', this.netVerifyData.frontsideImage);
+        } else if(this.count == 1){
+          this.netVerifyData.backsideImage = str;
+          this.imageBack.src = this.image.src;
+          this.notifyPath('netVerifyData.backsideImage', this.netVerifyData.backsideImage);
+        } else if(this.count == 2){
+          this.netVerifyData.faceImage = str;
+          this.imagePicture.src = this.image.src;
+          this.notifyPath('netVerifyData.faceImage', this.netVerifyData.faceImage);
+
+        }
+
+        this.count = (this.count + 1) % 3
+
+        this.previewPhoto = false;
+      }
+    });
+  })();
+  </script>
+</dom-module>
