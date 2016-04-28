@@ -1,5 +1,5 @@
 {
-  "name": "polymercamera",
+  "name": "polymer-camera",
   "version": "0.1.0",
   "authors": [
     "Jose Miguel Navarro <jmn8718@gmail..com>"
@@ -11,7 +11,7 @@
     "seed",
     "camera"
   ],
-  "main": "my-camera.html",
+  "main": "polymer-camera.html",
   "license": "http://polymer.github.io/LICENSE.txt",
   "homepage": "https://github.com/jmn8718/polymercamera",
   "ignore": [
