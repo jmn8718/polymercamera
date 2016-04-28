@@ -12,7 +12,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../camera-verification/camera-verification.html" xmlns="http://www.w3.org/1999/html">
 <link rel="import" href="../form-go-live/form-go-live.html" xmlns="http://www.w3.org/1999/html">
 
-<dom-module id="my-camera">
+<dom-module id="polymercamera">
   <style>
     .my-camera{
       text-align: center;
@@ -34,7 +34,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         method="POST"
         body="{{body}}"
         content-type="application/json"
-        url="/api/performNetVerify"
+        url="{{url}}"
         handle-as="json"
         last-response="{{_response}}"
         on-response="_handleResponse"></iron-ajax>
@@ -55,7 +55,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   <script>
     Polymer({
-      is: 'my-camera',
+      is: 'polymercamera',
 
       properties: {
         headers: {
