@@ -1,6 +1,6 @@
 {
   "name": "my-camera",
-  "version": "0.0.3",
+  "version": "0.0.1",
   "authors": [
     "Jose Miguel Navarro <jmn8718@gmail..com>"
   ],
@@ -21,7 +21,8 @@
   "dependencies": {
     "polymer": "Polymer/polymer#^1.2.0",
     "iron-ajax": "PolymerElements/iron-ajax#^1.2.0",
-    "my-camera": "jmn8718/polymercamera#^0.0.2"
+    "camera-verification": "jmn8718/camera-verification#^0.0.1",
+    "form-go-live": "jmn8718/form-go-live#^0.0.1"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
